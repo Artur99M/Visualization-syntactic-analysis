@@ -20,6 +20,8 @@ std::string token_to_str(token_types val) {
             return "(";
         case token_types::END_SCOPE:
             return ")";
+        case token_types::END:
+            return "$";
         default:
             return "unknown lexem";
     }

@@ -1,0 +1,28 @@
+_______________________________________________________________________________________________________
+|              STACK              |              INPUT              |              ACTION             |
+_______________________________________________________________________________________________________
+|                                 |id = ( num + id ) * num $        |                                 |
+|ID                               |= ( num + id ) * num $           |Shift                            |
+|ID =                             |( num + id ) * num $             |Shift                            |
+|ID = (                           |num + id ) * num $               |Shift                            |
+|ID = ( ID_NUM                    |+ id ) * num $                   |Shift                            |
+|ID = ( F                         |+ id ) * num $                   |Reduce F -> id | num             |
+|ID = ( T                         |+ id ) * num $                   |Reduce T -> F                    |
+|ID = ( E                         |+ id ) * num $                   |Reduce E -> T                    |
+|ID = ( E +                       |id ) * num $                     |Shift                            |
+|ID = ( E + ID                    |) * num $                        |Shift                            |
+|ID = ( E + ID_NUM                |) * num $                        |Reduce ID_NUM -> ID              |
+|ID = ( E + F                     |) * num $                        |Reduce F -> id | num             |
+|ID = ( E + T                     |) * num $                        |Reduce T -> F                    |
+|ID = ( E                         |) * num $                        |Reduce E -> E + T | E - T        |
+|ID = ( E )                       |* num $                          |Shift                            |
+|ID = F                           |* num $                          |Reduce F -> (E)                  |
+|ID = T                           |* num $                          |Reduce T -> F                    |
+|ID = T *                         |num $                            |Shift                            |
+|ID = T * ID_NUM                  |$                                |Shift                            |
+|ID = T * F                       |$                                |Reduce F -> id | num             |
+|ID = T                           |$                                |Reduce T -> T * F | T / F        |
+|ID = E                           |$                                |Reduce E -> T                    |
+|I                                |$                                |Reduce I -> id = E               |
+|E'                               |$                                |Reduce E' -> I                   |
+_______________________________________________________________________________________________________

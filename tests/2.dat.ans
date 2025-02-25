@@ -1,0 +1,27 @@
+_______________________________________________________________________________________________________
+|              STACK              |              INPUT              |              ACTION             |
+_______________________________________________________________________________________________________
+|                                 |id / ( num - id ) $              |                                 |
+|ID                               |/ ( num - id ) $                 |Shift                            |
+|ID_NUM                           |/ ( num - id ) $                 |Reduce ID_NUM -> ID              |
+|F                                |/ ( num - id ) $                 |Reduce F -> id | num             |
+|T                                |/ ( num - id ) $                 |Reduce T -> F                    |
+|T *                              |( num - id ) $                   |Shift                            |
+|T * (                            |num - id ) $                     |Shift                            |
+|T * ( ID_NUM                     |- id ) $                         |Shift                            |
+|T * ( F                          |- id ) $                         |Reduce F -> id | num             |
+|T * ( T                          |- id ) $                         |Reduce T -> F                    |
+|T * ( E                          |- id ) $                         |Reduce E -> T                    |
+|T * ( E +                        |id ) $                           |Shift                            |
+|T * ( E + ID                     |) $                              |Shift                            |
+|T * ( E + ID_NUM                 |) $                              |Reduce ID_NUM -> ID              |
+|T * ( E + F                      |) $                              |Reduce F -> id | num             |
+|T * ( E + T                      |) $                              |Reduce T -> F                    |
+|T * ( E                          |) $                              |Reduce E -> E + T | E - T        |
+|T * ( E )                        |$                                |Shift                            |
+|T * F                            |$                                |Reduce F -> (E)                  |
+|T                                |$                                |Reduce T -> T * F | T / F        |
+|E                                |$                                |Reduce E -> T                    |
+|I                                |$                                |Reduce I -> E                    |
+|E'                               |$                                |Reduce E' -> I                   |
+_______________________________________________________________________________________________________
