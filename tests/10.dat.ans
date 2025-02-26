@@ -1,0 +1,20 @@
+_______________________________________________________________________________________________________
+|              STACK              |              INPUT              |              ACTION             |
+_______________________________________________________________________________________________________
+|$                                |( ( id + num ) $                 |                                 |
+|$ (                              |( id + num ) $                   |Shift                            |
+|$ ( (                            |id + num ) $                     |Shift                            |
+|$ ( ( ID_NUM                     |+ num ) $                        |Shift                            |
+|$ ( ( F                          |+ num ) $                        |Reduce F -> id | num             |
+|$ ( ( T                          |+ num ) $                        |Reduce T -> F                    |
+|$ ( ( E                          |+ num ) $                        |Reduce E -> T                    |
+|$ ( ( E +                        |num ) $                          |Shift                            |
+|$ ( ( E + ID_NUM                 |) $                              |Shift                            |
+|$ ( ( E + F                      |) $                              |Reduce F -> id | num             |
+|$ ( ( E + T                      |) $                              |Reduce T -> F                    |
+|$ ( ( E                          |) $                              |Reduce E -> E + T                |
+|$ ( ( E )                        |$                                |Shift                            |
+|$ ( F                            |$                                |Reduce F -> (E)                  |
+|$ ( T                            |$                                |Reduce T -> F                    |
+|$ ( E                            |$                                |Reduce E -> T                    |
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: ')' not found

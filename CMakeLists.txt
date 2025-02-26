@@ -18,7 +18,7 @@ add_executable(${exec}
     ${src}
     ${FLEX_MyScanner_OUTPUTS}
     )
-target_compile_features(${exec} PUBLIC cxx_std_11)
+target_compile_features(${exec} PUBLIC cxx_std_23)
 target_include_directories(${exec} PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 include(CTest)

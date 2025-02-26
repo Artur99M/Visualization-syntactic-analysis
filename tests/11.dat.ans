@@ -1,0 +1,18 @@
+_______________________________________________________________________________________________________
+|              STACK              |              INPUT              |              ACTION             |
+_______________________________________________________________________________________________________
+|$                                |id = ( ( num + num $             |                                 |
+|$ ID                             |= ( ( num + num $                |Shift                            |
+|$ ID =                           |( ( num + num $                  |Shift                            |
+|$ ID = (                         |( num + num $                    |Shift                            |
+|$ ID = ( (                       |num + num $                      |Shift                            |
+|$ ID = ( ( ID_NUM                |+ num $                          |Shift                            |
+|$ ID = ( ( F                     |+ num $                          |Reduce F -> id | num             |
+|$ ID = ( ( T                     |+ num $                          |Reduce T -> F                    |
+|$ ID = ( ( E                     |+ num $                          |Reduce E -> T                    |
+|$ ID = ( ( E +                   |num $                            |Shift                            |
+|$ ID = ( ( E + ID_NUM            |$                                |Shift                            |
+|$ ID = ( ( E + F                 |$                                |Reduce F -> id | num             |
+|$ ID = ( ( E + T                 |$                                |Reduce T -> F                    |
+|$ ID = ( ( E                     |$                                |Reduce E -> E + T                |
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: ')' not found

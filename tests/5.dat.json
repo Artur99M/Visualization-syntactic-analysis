@@ -1,0 +1,1 @@
+{"0":{"ACTION":"","INPUT":"id = = num $ ","STACK":"$ "},"1":{"ACTION":"Shift","INPUT":"= = num $ ","STACK":"$ ID "},"2":{"ACTION":"Shift","INPUT":"= num $ ","STACK":"$ ID = "},"exception":"ERROR: can't reduce","nlines":3}

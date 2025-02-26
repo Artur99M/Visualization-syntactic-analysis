@@ -10,4 +10,4 @@ ________________________________________________________________________________
 |$ ID = ( T                       |+ $                              |Reduce T -> F                    |
 |$ ID = ( E                       |+ $                              |Reduce E -> T                    |
 |$ ID = ( E +                     |$                                |Shift                            |
-[31mERROR[31m: can't reduce
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: can't reduce

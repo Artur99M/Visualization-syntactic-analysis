@@ -4,4 +4,4 @@ ________________________________________________________________________________
 |$                                |id = = num $                     |                                 |
 |$ ID                             |= = num $                        |Shift                            |
 |$ ID =                           |= num $                          |Shift                            |
-[31mERROR[31m: can't reduce
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: can't reduce

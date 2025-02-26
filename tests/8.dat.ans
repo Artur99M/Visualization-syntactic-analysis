@@ -8,4 +8,4 @@ ________________________________________________________________________________
 |$ E                              |= num + num $                    |Reduce E -> T                    |
 |$ I                              |= num + num $                    |Reduce I -> E                    |
 |$ E'                             |= num + num $                    |Reduce E' -> I                   |
-[31mERROR[31m: can't reduce
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: can't reduce

@@ -2,60 +2,49 @@
 #include <iostream>
 #include "debug.hpp"
 #include <FlexLexer.h>
-int main() {
+#include "json.hpp"
+#include <string>
+#include <stdexcept>
+#include "maketable.hpp"
+int main(int argc, char* argv[]) {
+    bool is_json = false;
+    for (int i = 0; i < argc; ++i) {
+        if (std::string(argv[i]) == "json") {
+            is_json = true;
+        }
+    }
     using namespace syntax_analysis;
     SyntaxAnalizer<Grammar::LR0> An;
-    for (size_t i = 0; i < 103; ++i)
-        std::cout << '_';
-    std::cout << std::endl;
-    std::cout << '|';
-    for (size_t i = 0; i < 14; ++i) {
-        std::cout << ' ';
-    }
-    std::cout << "STACK";
-    for (size_t i = 0; i < 14; ++i) {
-        std::cout << ' ';
-    }
-    std::cout << '|';
-    for (size_t i = 0; i < 14; ++i) {
-        std::cout << ' ';
-    }
-    std::cout << "INPUT";
-    for (size_t i = 0; i < 14; ++i) {
-        std::cout << ' ';
-    }
-    std::cout << '|';
-    for (size_t i = 0; i < 14; ++i) {
-        std::cout << ' ';
-    }
-    std::cout << "ACTION";
-    for (size_t i = 0; i < 13; ++i) {
-        std::cout << ' ';
-    }
-    std::cout << '|';
-    std::cout << std::endl;
-    for (size_t i = 0; i < 103; ++i)
-        std::cout << '_';
-    std::cout << std::endl;
+    nlohmann::json JSON;
+    size_t nlines = 0;
 
+if (!is_json) {
+    tableHeaderGenerate();
+}
+    try {
     do {
-        // Artyr99M::debug << An.dump() << std::endl;
-        std::cout << '|' << An.stack_dump();
-        if (An.stack_dump().size() <= 33)
-        for (size_t i = 0; i < 33 - An.stack_dump().size(); ++i)
-            std::cout << ' ';
-        std::cout << '|' << An.input_dump();
-        if (An.input_dump().size() <= 33)
-        for (size_t i = 0; i < 33 - An.input_dump().size(); ++i)
-            std::cout << ' ';
-        std::cout << '|' << An.last_action();
-        for (size_t i = 0; i < 33 - An.last_action().size(); ++i)
-            std::cout << ' ';
-        std::cout << '|';
-        std::cout << std::endl;
+        if (is_json) {
+            JSON[std::to_string(nlines)] = {{"ACTION", An.last_action()},
+                                            {"INPUT",  An.input_dump()},
+                                            {"STACK",  An.stack_dump()}};
+            ++nlines;
+        } else {
+            tableLineGenerate(An);
+        }
     } while (An.step() == false);
-
-    for (size_t i = 0; i < 103; ++i)
-        std::cout << '_';
-    std::cout << std::endl;
+    } catch (std::invalid_argument x) {
+        if (is_json)
+            JSON["exception"] = x.what();
+        else throw;
+    } catch (std::logic_error x) {
+        if (is_json)
+            JSON["exception"] = x.what();
+        else throw;
+    }
+if (is_json) {
+    JSON["nlines"] = nlines;
+    std::cout << JSON.dump();
+} else {
+    tableBottomGenerate();
+}
 }

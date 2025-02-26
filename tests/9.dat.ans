@@ -10,4 +10,4 @@ ________________________________________________________________________________
 |$ ID = E                         |= num $                          |Reduce E -> T                    |
 |$ I                              |= num $                          |Reduce I -> ID = E               |
 |$ E'                             |= num $                          |Reduce E' -> I                   |
-[31mERROR[31m: can't reduce
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: can't reduce

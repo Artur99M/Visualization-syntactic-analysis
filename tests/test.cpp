@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <sys/stat.h>
+#include "../include/json.hpp"
 
 int main(int argc, const char* argv[]) {
     if (argc != 3) {
@@ -13,9 +14,10 @@ int main(int argc, const char* argv[]) {
     const std::string file      = argv[2];
     const std::string exec_file = dir + "/build/VSA.out";
     const std::string real      = dir + "/tests/test.txt";
-    const std::string ref       = file + ".ans";
+    const std::string ref       = file + ".json";
+    const std::string json      = "json";
     // execl(exec_file.c_str(), "0<", file.c_str(), ">", real.c_str(), NULL);
-    system ((exec_file + " 0< " + file + " > " + real + " 2>&1").c_str());
+    system ((exec_file + " 0< " + file + " > " + real + " 2>&1 " + json).c_str());
 
     std::ifstream realf {real};
     std::ifstream reff  {ref};
@@ -33,5 +35,8 @@ int main(int argc, const char* argv[]) {
 
     system (("rm " + real).c_str());
 
-    return !(std::string(realfstr) == reffstr);
+    bool ans = !(nlohmann::json::parse(realfstr) == nlohmann::json::parse(reffstr));
+    operator delete(reffstr);
+    operator delete(realfstr);
+    return ans;
 }
