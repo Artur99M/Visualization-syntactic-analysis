@@ -9,10 +9,6 @@
 #include <stdexcept>
 namespace syntax_analysis {
 
-const std::string RED   = "\033[31m";
-const std::string ERROR = RED + "ERROR" + RED;
-
-
 SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::deque<token_types>& stream_tokens)
  : input_(stream_tokens) {
     stack_.push_back(END);
@@ -58,8 +54,8 @@ std::string SyntaxAnalizer<Grammar::LR0>::nontostr(non_terminal x) {
         case EE         : return "E\'"   ;
         case MUL_DIV    : return "*"     ;
         case ADD_SUB    : return "+"     ;
-        case LBRACE: return "("     ;
-        case RBRACE  : return ")"     ;
+        case LBRACE     : return "("     ;
+        case RBRACE     : return ")"     ;
         case IS         : return "="     ;
         case END        : return "$"     ;
         default:
@@ -74,68 +70,41 @@ std::string SyntaxAnalizer<Grammar::LR0>::stack_dump() const {
     return str.str();
 }
 
+SyntaxAnalizer<Grammar::LR0>::non_terminal
+SyntaxAnalizer<Grammar::LR0>::token_type_to_non_terminal(token_types t) {
+  switch (t) {
+    case token_types::NUMBER: return ID_NUM;
+    case token_types::RBRACE: return RBRACE;
+    case token_types::LBRACE: return LBRACE;
+    case token_types::MUL   : return MUL_DIV;
+    case token_types::DIV   : return MUL_DIV;
+    case token_types::ADD   : return ADD_SUB;
+    case token_types::SUB   : return ADD_SUB;
+    case token_types::IS    : return IS;
+    default: return ERROR_NON_TERMINAL;
+  }
+}
+
 template<token_types T>
 inline void SyntaxAnalizer<Grammar::LR0>::shift() {
-    throw std::invalid_argument(ERROR + ": unexpected lexem!");
+    non_terminal t = token_type_to_non_terminal(T);
+    if (t == ERROR_NON_TERMINAL) {
+        throw std::invalid_argument("ERROR: unexpected lexem!");
+    }
+
+    input_.pop_front();
+    stack_.push_back(t);
+    last_action_ = "Shift";
 }
+
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ID>() {
     input_.pop_front();
-    if (stack_.back() == END && input_.front() == token_types::IS) {
-        stack_.push_back(ID);
+    if (*(stack_.end() - 1) == END && input_[0] == token_types::IS) {
+        stack_.emplace_back(ID);
     } else {
-        stack_.push_back(ID_NUM);
+        stack_.emplace_back(ID_NUM);
     }
-    last_action_ = "Shift";
-}
-
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::NUMBER>() {
-    input_.pop_front();
-    stack_.push_back(ID_NUM);
-    last_action_ = "Shift";
-}
-
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::RBRACE>() {
-    input_.pop_front();
-    stack_.push_back(RBRACE);
-    last_action_ = "Shift";
-}
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::LBRACE>() {
-    input_.pop_front();
-    stack_.push_back(LBRACE);
-    last_action_ = "Shift";
-}
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::MUL>() {
-    input_.pop_front();
-    stack_.push_back(MUL_DIV);
-    last_action_ = "Shift";
-}
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::DIV>() {
-    input_.pop_front();
-    stack_.push_back(MUL_DIV);
-    last_action_ = "Shift";
-}
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ADD>() {
-    input_.pop_front();
-    stack_.push_back(ADD_SUB);
-    last_action_ = "Shift";
-}
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::SUB>() {
-    input_.pop_front();
-    stack_.push_back(ADD_SUB);
-    last_action_ = "Shift";
-}
-template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::IS>() {
-    input_.pop_front();
-    stack_.push_back(IS);
     last_action_ = "Shift";
 }
 
@@ -174,6 +143,8 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
                 stack_.pop_back();
                 stack_.back() = I;
                 last_action_ = "Reduce I -> ID = E";
+            } else if (*(stack_.end() - 2) == LBRACE) { //here always be error because if we here we did't shift RBRACE
+                throw std::logic_error("ERROR: \')\' not found");
             } else {
                 stack_.back() = I;
                 last_action_ = "Reduce I -> E";
@@ -192,7 +163,7 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
                 break;
             }
         default:
-            throw std::logic_error(ERROR + ": can\'t reduce");
+            throw std::logic_error("ERROR: can\'t reduce");
     }
 }
 
@@ -275,7 +246,7 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
             }
             break;
         default:
-            throw std::invalid_argument(ERROR + ": unexpected lexem!");
+            throw std::invalid_argument("ERROR: unexpected lexem!");
     }
 
     return false;

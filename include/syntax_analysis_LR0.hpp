@@ -29,6 +29,7 @@ private:
         ,IS
         ,ID
         ,END
+        ,ERROR_NON_TERMINAL
     };
 
     //std::deque was chosen because I needs to erase in front of and in back of container.
@@ -54,7 +55,8 @@ private:
 
 
 public:
-    static std::string nontostr(non_terminal);
+    static std::string  nontostr                  (non_terminal);
+    static non_terminal token_type_to_non_terminal(token_types t);
 
 
 };
