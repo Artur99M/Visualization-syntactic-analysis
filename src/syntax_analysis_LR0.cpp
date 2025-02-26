@@ -24,7 +24,7 @@ SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::istream& is) {
 }
 
 std::string SyntaxAnalizer<Grammar::LR0>::last_action() const {
-    return last_action_;
+    return action_to_string(last_action_);
 }
 
 std::string SyntaxAnalizer<Grammar::LR0>::dump() const {
@@ -94,7 +94,7 @@ inline void SyntaxAnalizer<Grammar::LR0>::shift() {
 
     input_.pop_front();
     stack_.push_back(t);
-    last_action_ = "Shift";
+    last_action_ = SHIFT;
 }
 
 template<>
@@ -105,7 +105,7 @@ inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ID>() {
     } else {
         stack_.emplace_back(ID_NUM);
     }
-    last_action_ = "Shift";
+    last_action_ = SHIFT;
 }
 
 void SyntaxAnalizer<Grammar::LR0>::reduce() {
@@ -113,17 +113,17 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
     switch(current_top) {
         case ID_NUM:
             stack_.back() = F;
-            last_action_ = "Reduce F -> id | num";
+            last_action_ = REDUCE_F_ID_NUM;
             break;
         case F:
             if (stack_.size() > 2 && *(stack_.end() - 2) == MUL_DIV && *(stack_.end() - 3) == T) {
                 stack_.pop_back();
                 stack_.pop_back();
                 stack_.back() = T;
-                last_action_ = "Reduce T -> T * F";
+                last_action_ = REDUCE_T_TF;
             } else {
                 stack_.back() = T;
-                last_action_ = "Reduce T -> F";
+                last_action_ = REDUCE_T_F;
             }
             break;
         case T:
@@ -131,10 +131,10 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
                 stack_.pop_back();
                 stack_.pop_back();
                 stack_.back() = E;
-                last_action_ = "Reduce E -> E + T";
+                last_action_ = REDUCE_E_ET;
             } else {
                 stack_.back() = E;
-                last_action_ = "Reduce E -> T";
+                last_action_ = REDUCE_E_T;
             }
             break;
         case E:
@@ -142,24 +142,24 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
                 stack_.pop_back();
                 stack_.pop_back();
                 stack_.back() = I;
-                last_action_ = "Reduce I -> ID = E";
+                last_action_ = REDUCE_I_ID_E;
             } else if (*(stack_.end() - 2) == LBRACE) { //here always be error because if we here we did't shift RBRACE
                 throw std::logic_error("ERROR: \')\' not found");
             } else {
                 stack_.back() = I;
-                last_action_ = "Reduce I -> E";
+                last_action_ = REDUCE_I_E;
             }
             break;
         case I:
             stack_.back() = EE;
-            last_action_ = "Reduce E\' -> I";
+            last_action_ = REDUCE_EE_I;
             break;
         case RBRACE:
             if (stack_.size() > 2 && *(stack_.end() - 2) == E && *(stack_.end() - 3) == LBRACE) {
                 stack_.pop_back();
                 stack_.pop_back();
                 stack_.back() = F;
-                last_action_ = "Reduce F -> (E)";
+                last_action_ = REDUCE_F_L_E_R;
                 break;
             }
         default:
@@ -252,4 +252,20 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
     return false;
 }
 
+std::string SyntaxAnalizer<Grammar::LR0>::action_to_string (action a) {
+    switch (a) {
+        case SHIFT          : return "Shift"               ;
+        case REDUCE_F_ID_NUM: return "Reduce F -> id | num";
+        case REDUCE_T_TF    : return "Reduce T -> T * F"   ;
+        case REDUCE_T_F     : return "Reduce T -> F"       ;
+        case REDUCE_E_ET    : return "Reduce E -> E + T"   ;
+        case REDUCE_E_T     : return "Reduce E -> T"       ;
+        case REDUCE_I_ID_E  : return "Reduce I -> ID = E"  ;
+        case REDUCE_I_E     : return "Reduce I -> E"       ;
+        case REDUCE_EE_I    : return "Reduce E\' -> I"     ;
+        case REDUCE_F_L_E_R : return "Reduce F -> (E)"     ;
+        case ACTION_EMPTY   : return ""     ;
+        default:              return "ERROR"               ;
+    }
+}
 } //namespace syntax_analysis
