@@ -5,6 +5,7 @@
 #include <deque>
 #include <iostream>
 #include <string>
+#include <vector>
 
 
 namespace syntax_analysis {
@@ -23,38 +24,20 @@ private:
         ,ID_NUM
         ,ADD_SUB
         ,MUL_DIV
-        ,END_SCOPE
-        ,START_SCOPE
+        ,RBRACE
+        ,LBRACE
         ,IS
         ,ID
         ,END
     };
 
-//     struct BaseNode {
-//         virtual operator std::string() const = 0;
-//         virtual ~BaseNode() = default;
-//     };
-//     struct Leaf : BaseNode {
-//         token_types            token;
-//         operator std::string() const override;
-//         ~Leaf() override = default;
-//     };
-//     struct Node : BaseNode {
-//         non_terminal           expression;
-//         std::vector<BaseNode*> children;
-//
-//         operator std::string() const override;
-//         ~Node() override;
-//     };
-
-    std::deque<non_terminal> stack_;
+    //std::deque was chosen because I needs to erase in front of and in back of container.
+    //Opportunity to dump container with using deque remains.
+    std::vector<non_terminal> stack_;
     std::deque<token_types>  input_;
-    // Node                     parse_tree_;
     std::string              last_action_;
-    // token_types                  next_token_;
 
 public:
-    // SyntaxAnalizer();
     SyntaxAnalizer(std::deque<token_types>& stream_tokens);
     SyntaxAnalizer(std::istream&            is = std::cin);
 public:

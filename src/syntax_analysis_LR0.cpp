@@ -5,10 +5,8 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-#include <set>
 #include <cstdlib>
-// #include <type_traits>
-#include <typeinfo>
+#include <stdexcept>
 namespace syntax_analysis {
 
 const std::string RED   = "\033[31m";
@@ -17,35 +15,17 @@ const std::string ERROR = RED + "ERROR" + RED;
 
 SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::deque<token_types>& stream_tokens)
  : input_(stream_tokens) {
-    stack_.emplace_back(END);
+    stack_.push_back(END);
  }
 
 SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::istream& is) {
     yyFlexLexer lexer{is, std::cerr};
-    std::deque<token_types> stream_tokens;
     for (int x = 0; x != (int) token_types::END;) {
         x = lexer.yylex();
-        stream_tokens.push_back(static_cast<token_types>(x));
-        // Artyr99M::debug << x << " ";
-        // Artyr99M::debug.flush();
+        input_.push_back(static_cast<token_types>(x));
     }
-    // stream_tokens.push_back(token_types::END);
-    // Artyr99M::debug << std::endl;
-    input_ = std::move(stream_tokens);
-    stack_.emplace_back(END);
+    stack_.push_back(END);
 }
-
-// SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer() {
-//     yyFlexLexer lexer;
-//     std::deque<token_types> stream_tokens;
-//     for (int x = lexer.yylex(); x != (int) token_types::END; x = lexer.yylex()) {
-//         stream_tokens.push_back(static_cast<token_types>(x));
-//         Artyr99M::debug << x << " ";
-//         Artyr99M::debug.flush();
-//     }
-//     Artyr99M::debug << std::endl;
-//     input_ = std::move(stream_tokens);
-// }
 
 std::string SyntaxAnalizer<Grammar::LR0>::last_action() const {
     return last_action_;
@@ -78,8 +58,8 @@ std::string SyntaxAnalizer<Grammar::LR0>::nontostr(non_terminal x) {
         case EE         : return "E\'"   ;
         case MUL_DIV    : return "*"     ;
         case ADD_SUB    : return "+"     ;
-        case START_SCOPE: return "("     ;
-        case END_SCOPE  : return ")"     ;
+        case LBRACE: return "("     ;
+        case RBRACE  : return ")"     ;
         case IS         : return "="     ;
         case END        : return "$"     ;
         default:
@@ -96,132 +76,130 @@ std::string SyntaxAnalizer<Grammar::LR0>::stack_dump() const {
 
 template<token_types T>
 inline void SyntaxAnalizer<Grammar::LR0>::shift() {
-    std::cerr << ERROR << ": unexpected lexem!" << std::endl;
-    exit(1);
+    throw std::invalid_argument(ERROR + ": unexpected lexem!");
 }
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ID>() {
-    input_.erase(input_.begin());
-    if (*(stack_.end() - 1) == END && input_[0] == token_types::IS) {
-        stack_.emplace_back(ID);
+    input_.pop_front();
+    if (stack_.back() == END && input_.front() == token_types::IS) {
+        stack_.push_back(ID);
     } else {
-        stack_.emplace_back(ID_NUM);
+        stack_.push_back(ID_NUM);
     }
     last_action_ = "Shift";
 }
 
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::NUMBER>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(ID_NUM);
+    input_.pop_front();
+    stack_.push_back(ID_NUM);
     last_action_ = "Shift";
 }
 
 template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::END_SCOPE>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(END_SCOPE);
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::RBRACE>() {
+    input_.pop_front();
+    stack_.push_back(RBRACE);
     last_action_ = "Shift";
 }
 template<>
-inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::START_SCOPE>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(START_SCOPE);
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::LBRACE>() {
+    input_.pop_front();
+    stack_.push_back(LBRACE);
     last_action_ = "Shift";
 }
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::MUL>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(MUL_DIV);
+    input_.pop_front();
+    stack_.push_back(MUL_DIV);
     last_action_ = "Shift";
 }
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::DIV>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(MUL_DIV);
+    input_.pop_front();
+    stack_.push_back(MUL_DIV);
     last_action_ = "Shift";
 }
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ADD>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(ADD_SUB);
+    input_.pop_front();
+    stack_.push_back(ADD_SUB);
     last_action_ = "Shift";
 }
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::SUB>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(ADD_SUB);
+    input_.pop_front();
+    stack_.push_back(ADD_SUB);
     last_action_ = "Shift";
 }
 template<>
 inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::IS>() {
-    input_.erase(input_.begin());
-    stack_.emplace_back(IS);
+    input_.pop_front();
+    stack_.push_back(IS);
     last_action_ = "Shift";
 }
 
 void SyntaxAnalizer<Grammar::LR0>::reduce() {
-    non_terminal current_top = *(stack_.end() - 1);
+    non_terminal current_top = stack_.back();
     switch(current_top) {
         case ID_NUM:
-            *(stack_.end() - 1) = F;
+            stack_.back() = F;
             last_action_ = "Reduce F -> id | num";
             break;
         case F:
             if (stack_.size() > 2 && *(stack_.end() - 2) == MUL_DIV && *(stack_.end() - 3) == T) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                *(stack_.end() - 1) = T;
+                stack_.pop_back();
+                stack_.pop_back();
+                stack_.back() = T;
                 last_action_ = "Reduce T -> T * F";
             } else {
-                *(stack_.end() - 1) = T;
+                stack_.back() = T;
                 last_action_ = "Reduce T -> F";
             }
             break;
         case T:
             if (stack_.size() > 2 && *(stack_.end() - 2) == ADD_SUB && *(stack_.end() - 3) == E) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                *(stack_.end() - 1) = E;
+                stack_.pop_back();
+                stack_.pop_back();
+                stack_.back() = E;
                 last_action_ = "Reduce E -> E + T";
             } else {
-                *(stack_.end() - 1) = E;
+                stack_.back() = E;
                 last_action_ = "Reduce E -> T";
             }
             break;
         case E:
             if (stack_.size() > 2 && *(stack_.end() - 2) == IS && *(stack_.end() - 3) == ID) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                *(stack_.end() - 1) = I;
+                stack_.pop_back();
+                stack_.pop_back();
+                stack_.back() = I;
                 last_action_ = "Reduce I -> ID = E";
             } else {
-                *(stack_.end() - 1) = I;
+                stack_.back() = I;
                 last_action_ = "Reduce I -> E";
             }
             break;
         case I:
-            *(stack_.end() - 1) = EE;
+            stack_.back() = EE;
             last_action_ = "Reduce E\' -> I";
             break;
-        case END_SCOPE:
-            if (stack_.size() > 2 && *(stack_.end() - 2) == E && *(stack_.end() - 3) == START_SCOPE) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                *(stack_.end() - 1) = F;
+        case RBRACE:
+            if (stack_.size() > 2 && *(stack_.end() - 2) == E && *(stack_.end() - 3) == LBRACE) {
+                stack_.pop_back();
+                stack_.pop_back();
+                stack_.back() = F;
                 last_action_ = "Reduce F -> (E)";
                 break;
             }
         default:
-            std::cerr << ERROR << ": can\'t reduce" << std::endl;
-            exit(1);
+            throw std::logic_error(ERROR + ": can\'t reduce");
     }
 }
 
 bool SyntaxAnalizer<Grammar::LR0>::step() {
 
-    non_terminal current_top  = *(stack_.end() - 1);
-    token_types   next_token  = input_[0];
+    non_terminal current_top  = stack_.back();
+    token_types   next_token  = input_.front();
 
     switch (next_token) {
         case token_types::END:
@@ -231,7 +209,7 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
                 return true;
             break;
         case token_types::ID:
-            if (current_top == ADD_SUB || current_top == START_SCOPE ||
+            if (current_top == ADD_SUB || current_top == LBRACE ||
                 current_top == MUL_DIV || current_top == IS || current_top == END) {
                 shift<token_types::ID>();
             } else {
@@ -239,24 +217,24 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
             }
             break;
         case token_types::NUMBER:
-            if (current_top == ADD_SUB || current_top == START_SCOPE ||
+            if (current_top == ADD_SUB || current_top == LBRACE ||
                 current_top == MUL_DIV || current_top == IS || current_top == END) {
                 shift<token_types::NUMBER>();
             } else {
                 reduce();
             }
             break;
-        case token_types::END_SCOPE:
+        case token_types::RBRACE:
             if (current_top == E) {
-                shift<token_types::END_SCOPE>();
+                shift<token_types::RBRACE>();
             } else {
                 reduce();
             }
             break;
-        case token_types::START_SCOPE:
-            if (current_top == ADD_SUB || current_top == START_SCOPE ||
+        case token_types::LBRACE:
+            if (current_top == ADD_SUB || current_top == LBRACE ||
                 current_top == MUL_DIV || current_top == IS || current_top == END) {
-                shift<token_types::START_SCOPE>();
+                shift<token_types::LBRACE>();
             } else {
                 reduce();
             }
@@ -297,26 +275,10 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
             }
             break;
         default:
-            std::cerr << ERROR << ": unexpected lexem!" << std::endl;
-            exit(1);
+            throw std::invalid_argument(ERROR + ": unexpected lexem!");
     }
 
     return false;
-
 }
 
-// SyntaxAnalizer<Grammar::LR0>::Node::operator std::string() const {
-//     return "bark";
-// }
-// SyntaxAnalizer<Grammar::LR0>::Node::~Node() {
-//     for (BaseNode* x : children) {
-//         if (typeid(x) == typeid(*this)) {
-//             dynamic_cast<Node&>(*x).~Node();
-//         }
-//     }
-// }
-
-// SyntaxAnalizer<Grammar::LR0>::Leaf::operator std::string() const {
-//     return token_to_str(token);
-// }
 } //namespace syntax_analysis

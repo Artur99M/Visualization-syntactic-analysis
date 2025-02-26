@@ -1,13 +1,14 @@
 #include "debug.hpp"
 #include <iostream>
 namespace Artyr99M {
-#ifdef DEBUG
+#ifdef NDEBUG
 std::ostream& debug = std::cerr;
 #else
-template <typename T>
-debuging& operator<<(debuging& d, T x) {
-    return d;
-}
+// template <typename T>
+// debuging& debuging::operator<<(const T x) {
+//     return *this;
+// }
+
 debuging& debuging::operator<<(std::basic_ostream<char, std::char_traits<char>>& (*func)(std::basic_ostream<char, std::char_traits<char>>&)) {
     return *this;
 }

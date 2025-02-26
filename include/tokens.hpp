@@ -11,8 +11,8 @@ enum class token_types {
    ,IS
    ,ENDSTR
    ,END
-   ,START_SCOPE
-   ,END_SCOPE
+   ,LBRACE
+   ,RBRACE
 };
 
 std::string token_to_str(token_types);

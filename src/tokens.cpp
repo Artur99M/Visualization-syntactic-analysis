@@ -16,9 +16,9 @@ std::string token_to_str(token_types val) {
             return "/";
         case token_types::IS:
             return "=";
-        case token_types::START_SCOPE:
+        case token_types::LBRACE:
             return "(";
-        case token_types::END_SCOPE:
+        case token_types::RBRACE:
             return ")";
         case token_types::END:
             return "$";

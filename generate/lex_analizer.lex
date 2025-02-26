@@ -31,7 +31,8 @@ div    [/]
 \n          {++num_line;}
 {ws}        {}
 {endstr}    {return (int) token_types::ENDSTR;}
-({end}|EOF) {return (int) token_types::END;}
+{end}       {return (int) token_types::END;}
+<<EOF>>     {return (int) token_types::END;}
 {number}    {return (int) token_types::NUMBER;}
 {is}        {return (int) token_types::IS;}
 {add}       {return (int) token_types::ADD;}
@@ -39,7 +40,7 @@ div    [/]
 {mul}       {return (int) token_types::MUL;}
 {div}       {return (int) token_types::DIV;}
 {id}        {return (int) token_types::ID;}
-[(]         {return (int) token_types::START_SCOPE;}
-[)]         {return (int) token_types::END_SCOPE;}
-.           {return (int)token_types::NO_TOKENS; }//std::cerr << "unknow symbol in line " << num_line << std::endl; exit(1);}
+[(]         {return (int) token_types::LBRACE;}
+[)]         {return (int) token_types::RBRACE;}
+.           {return (int)token_types::NO_TOKENS; }//std::cerr << "unknow symbol in line " << num_line << std::endl; exit(1);
 %%
