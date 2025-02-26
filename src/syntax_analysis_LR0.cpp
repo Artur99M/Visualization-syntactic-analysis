@@ -167,14 +167,6 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
             *(stack_.end() - 1) = F;
             last_action_ = "Reduce F -> id | num";
             break;
-        case END_SCOPE:
-            if (stack_.size() > 2 && *(stack_.end() - 2) == E && *(stack_.end() - 3) == START_SCOPE) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                *(stack_.end() - 1) = F;
-                last_action_ = "Reduce F -> (E)";
-                break;
-            }
         case F:
             if (stack_.size() > 2 && *(stack_.end() - 2) == MUL_DIV && *(stack_.end() - 3) == T) {
                 stack_.erase(stack_.end() - 1);
@@ -212,6 +204,14 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
             *(stack_.end() - 1) = EE;
             last_action_ = "Reduce E\' -> I";
             break;
+        case END_SCOPE:
+            if (stack_.size() > 2 && *(stack_.end() - 2) == E && *(stack_.end() - 3) == START_SCOPE) {
+                stack_.erase(stack_.end() - 1);
+                stack_.erase(stack_.end() - 1);
+                *(stack_.end() - 1) = F;
+                last_action_ = "Reduce F -> (E)";
+                break;
+            }
         default:
             std::cerr << ERROR << ": can\'t reduce" << std::endl;
             exit(1);
