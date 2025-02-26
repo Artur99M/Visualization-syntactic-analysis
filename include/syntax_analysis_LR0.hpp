@@ -27,6 +27,7 @@ private:
         ,START_SCOPE
         ,IS
         ,ID
+        ,END
     };
 
 //     struct BaseNode {
@@ -63,8 +64,11 @@ public:
     std::string stack_dump () const;
     std::string last_action() const;
 private:
-    void        shift      ()      ;
-    bool        first_step ()      ;
+    template <token_types T>
+    inline void shift      ()      ;
+    void        reduce     ()      ;
+
+
 
 public:
     static std::string nontostr(non_terminal);

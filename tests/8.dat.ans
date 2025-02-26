@@ -1,6 +1,11 @@
 _______________________________________________________________________________________________________
 |              STACK              |              INPUT              |              ACTION             |
 _______________________________________________________________________________________________________
-|                                 |num = num + num $                |                                 |
-|ID_NUM                           |= num + num $                    |Shift                            |
-[31mERROR:[0m unexpected symbol!
+|$                                |num = num + num $                |                                 |
+|$ ID_NUM                         |= num + num $                    |Shift                            |
+|$ F                              |= num + num $                    |Reduce F -> id | num             |
+|$ T                              |= num + num $                    |Reduce T -> F                    |
+|$ E                              |= num + num $                    |Reduce E -> T                    |
+|$ I                              |= num + num $                    |Reduce I -> E                    |
+|$ E'                             |= num + num $                    |Reduce E' -> I                   |
+[31mERROR[31m: can't reduce

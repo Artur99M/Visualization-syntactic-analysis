@@ -1,15 +1,13 @@
 _______________________________________________________________________________________________________
 |              STACK              |              INPUT              |              ACTION             |
 _______________________________________________________________________________________________________
-|                                 |id = id = num $                  |                                 |
-|ID                               |= id = num $                     |Shift                            |
-|ID =                             |id = num $                       |Shift                            |
-|ID = ID                          |= num $                          |Shift                            |
-|ID = ID =                        |num $                            |Shift                            |
-|ID = ID = ID_NUM                 |$                                |Shift                            |
-|ID = ID = F                      |$                                |Reduce F -> id | num             |
-|ID = ID = T                      |$                                |Reduce T -> F                    |
-|ID = ID = E                      |$                                |Reduce E -> T                    |
-|ID = I                           |$                                |Reduce I -> id = E               |
-|ID = E'                          |$                                |Reduce E' -> I                   |
-[31mERROR:[0m too many '='!
+|$                                |id = id = num $                  |                                 |
+|$ ID                             |= id = num $                     |Shift                            |
+|$ ID =                           |id = num $                       |Shift                            |
+|$ ID = ID_NUM                    |= num $                          |Shift                            |
+|$ ID = F                         |= num $                          |Reduce F -> id | num             |
+|$ ID = T                         |= num $                          |Reduce T -> F                    |
+|$ ID = E                         |= num $                          |Reduce E -> T                    |
+|$ I                              |= num $                          |Reduce I -> ID = E               |
+|$ E'                             |= num $                          |Reduce E' -> I                   |
+[31mERROR[31m: can't reduce

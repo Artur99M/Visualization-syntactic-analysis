@@ -11,8 +11,13 @@
 #include <typeinfo>
 namespace syntax_analysis {
 
+const std::string RED   = "\033[31m";
+const std::string ERROR = RED + "ERROR" + RED;
+
+
 SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::deque<token_types>& stream_tokens)
  : input_(stream_tokens) {
+    stack_.emplace_back(END);
  }
 
 SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::istream& is) {
@@ -27,6 +32,7 @@ SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer(std::istream& is) {
     // stream_tokens.push_back(token_types::END);
     // Artyr99M::debug << std::endl;
     input_ = std::move(stream_tokens);
+    stack_.emplace_back(END);
 }
 
 // SyntaxAnalizer<Grammar::LR0>::SyntaxAnalizer() {
@@ -63,42 +69,19 @@ std::string SyntaxAnalizer<Grammar::LR0>::input_dump() const {
 
 std::string SyntaxAnalizer<Grammar::LR0>::nontostr(non_terminal x) {
     switch (x) {
-        case ID:
-            return "ID";
-            break;
-        case F:
-            return "F";
-            break;
-        case ID_NUM:
-            return "ID_NUM";
-            break;
-        case T:
-            return "T";
-            break;
-        case E:
-            return "E";
-            break;
-        case I:
-            return "I";
-            break;
-        case EE:
-            return "E\'";
-            break;
-        case MUL_DIV:
-            return "*";
-            break;
-        case ADD_SUB:
-            return "+";
-            break;
-        case START_SCOPE:
-            return "(";
-            break;
-        case END_SCOPE:
-            return ")";
-            break;
-        case IS:
-            return "=";
-            break;
+        case ID         : return "ID"    ;
+        case F          : return "F"     ;
+        case ID_NUM     : return "ID_NUM";
+        case T          : return "T"     ;
+        case E          : return "E"     ;
+        case I          : return "I"     ;
+        case EE         : return "E\'"   ;
+        case MUL_DIV    : return "*"     ;
+        case ADD_SUB    : return "+"     ;
+        case START_SCOPE: return "("     ;
+        case END_SCOPE  : return ")"     ;
+        case IS         : return "="     ;
+        case END        : return "$"     ;
         default:
             return "unknown non-terminal";
     }
@@ -111,105 +94,213 @@ std::string SyntaxAnalizer<Grammar::LR0>::stack_dump() const {
     return str.str();
 }
 
-
-bool SyntaxAnalizer<Grammar::LR0>::step() {
-    if (input_.size() ==  0) {
-        return true;
+template<token_types T>
+inline void SyntaxAnalizer<Grammar::LR0>::shift() {
+    std::cerr << ERROR << ": unexpected lexem!" << std::endl;
+    exit(1);
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ID>() {
+    input_.erase(input_.begin());
+    if (*(stack_.end() - 1) == END && input_[0] == token_types::IS) {
+        stack_.emplace_back(ID);
+    } else {
+        stack_.emplace_back(ID_NUM);
     }
+    last_action_ = "Shift";
+}
 
-    if (stack_.size() == 0)
-        return first_step();
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::NUMBER>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(ID_NUM);
+    last_action_ = "Shift";
+}
 
-    non_terminal& current_top = *(stack_.end() - 1); //here may be reference invalidation, be caution
-    token_types   next_token  = input_[0];
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::END_SCOPE>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(END_SCOPE);
+    last_action_ = "Shift";
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::START_SCOPE>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(START_SCOPE);
+    last_action_ = "Shift";
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::MUL>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(MUL_DIV);
+    last_action_ = "Shift";
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::DIV>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(MUL_DIV);
+    last_action_ = "Shift";
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::ADD>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(ADD_SUB);
+    last_action_ = "Shift";
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::SUB>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(ADD_SUB);
+    last_action_ = "Shift";
+}
+template<>
+inline void SyntaxAnalizer<Grammar::LR0>::shift<token_types::IS>() {
+    input_.erase(input_.begin());
+    stack_.emplace_back(IS);
+    last_action_ = "Shift";
+}
 
-    switch (current_top) {
+void SyntaxAnalizer<Grammar::LR0>::reduce() {
+    non_terminal current_top = *(stack_.end() - 1);
+    switch(current_top) {
         case ID_NUM:
-            if (next_token == token_types::IS || next_token == token_types::START_SCOPE ||
-                next_token == token_types::ID || next_token == token_types::NUMBER) {
-                std::cerr << "\x1b[31mERROR:\x1b[0m" << " unexpected symbol!" << std::endl;
-                exit(1);
-            }
-            current_top = F;
+            *(stack_.end() - 1) = F;
             last_action_ = "Reduce F -> id | num";
             break;
-        case F:
-            if (stack_.size() > 2 && *(stack_.end() - 2) == MUL_DIV && *(stack_.end() - 3) == T) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                last_action_ = "Reduce T -> T * F | T / F";
-            } else {
-                current_top  = T;
-                last_action_ = "Reduce T -> F";
-            }
-            break;
-        case T:
-            if (next_token == token_types::MUL || next_token == token_types::DIV) {
-                stack_.emplace_back(MUL_DIV);
-                input_.erase(input_.begin());
-                last_action_ = "Shift";
-            } else if (stack_.size() > 2 && *(stack_.end() - 2) == ADD_SUB && *(stack_.end() - 3) == E) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                last_action_ = "Reduce E -> E + T | E - T";
-            } else {
-                current_top = E;
-                last_action_ = "Reduce E -> T";
-            }
-            break;
-        case E:
-            if (next_token == token_types::ADD || next_token == token_types::SUB) {
-                stack_.emplace_back(ADD_SUB);
-                input_.erase(input_.begin());
-                last_action_ = "Shift";
-            } else if (next_token == token_types::END_SCOPE) {
-                stack_.emplace_back(END_SCOPE);
-                input_.erase(input_.begin());
-                last_action_ = "Shift";
-            } else if (stack_.size() > 2 && *(stack_.end() - 2) == IS && *(stack_.end() - 3) == ID) {
-                stack_.erase(stack_.end() - 1);
-                stack_.erase(stack_.end() - 1);
-                *(stack_.end() - 1) = I;
-                last_action_ = "Reduce I -> id = E";
-            } else {
-                current_top = I;
-                last_action_ = "Reduce I -> E";
-            }
-            break;
-        case I:
-            current_top = EE;
-            last_action_ = "Reduce E\' -> I";
-            break;
-        case EE:
-            if (stack_.size() > 1) {
-                std::cerr << "\x1b[31mERROR:\x1b[0m" << " too many \'=\'!" << std::endl;
-                exit(1);
-            }
-            return true;
-        case ID:
-            if (next_token == token_types::IS) {
-                stack_.emplace_back(IS);
-                input_.erase(input_.begin());
-                last_action_ = "Shift";
-            } else {
-                current_top = ID_NUM;
-                last_action_ = "Reduce ID_NUM -> ID";
-            }
-            break;
         case END_SCOPE:
-            if (*(stack_.end() - 2) == E && *(stack_.end() - 3) == START_SCOPE) {
+            if (stack_.size() > 2 && *(stack_.end() - 2) == E && *(stack_.end() - 3) == START_SCOPE) {
                 stack_.erase(stack_.end() - 1);
                 stack_.erase(stack_.end() - 1);
                 *(stack_.end() - 1) = F;
                 last_action_ = "Reduce F -> (E)";
+                break;
+            }
+        case F:
+            if (stack_.size() > 2 && *(stack_.end() - 2) == MUL_DIV && *(stack_.end() - 3) == T) {
+                stack_.erase(stack_.end() - 1);
+                stack_.erase(stack_.end() - 1);
+                *(stack_.end() - 1) = T;
+                last_action_ = "Reduce T -> T * F";
             } else {
-                std::cerr << "\x1b[31mERROR:\x1b[0m" << " error in scopes!" << std::endl;
-                exit(1);
+                *(stack_.end() - 1) = T;
+                last_action_ = "Reduce T -> F";
+            }
+            break;
+        case T:
+            if (stack_.size() > 2 && *(stack_.end() - 2) == ADD_SUB && *(stack_.end() - 3) == E) {
+                stack_.erase(stack_.end() - 1);
+                stack_.erase(stack_.end() - 1);
+                *(stack_.end() - 1) = E;
+                last_action_ = "Reduce E -> E + T";
+            } else {
+                *(stack_.end() - 1) = E;
+                last_action_ = "Reduce E -> T";
+            }
+            break;
+        case E:
+            if (stack_.size() > 2 && *(stack_.end() - 2) == IS && *(stack_.end() - 3) == ID) {
+                stack_.erase(stack_.end() - 1);
+                stack_.erase(stack_.end() - 1);
+                *(stack_.end() - 1) = I;
+                last_action_ = "Reduce I -> ID = E";
+            } else {
+                *(stack_.end() - 1) = I;
+                last_action_ = "Reduce I -> E";
+            }
+            break;
+        case I:
+            *(stack_.end() - 1) = EE;
+            last_action_ = "Reduce E\' -> I";
+            break;
+        default:
+            std::cerr << ERROR << ": can\'t reduce" << std::endl;
+            exit(1);
+    }
+}
+
+bool SyntaxAnalizer<Grammar::LR0>::step() {
+
+    non_terminal current_top  = *(stack_.end() - 1);
+    token_types   next_token  = input_[0];
+
+    switch (next_token) {
+        case token_types::END:
+            if (current_top != EE)
+                reduce();
+            else
+                return true;
+            break;
+        case token_types::ID:
+            if (current_top == ADD_SUB || current_top == START_SCOPE ||
+                current_top == MUL_DIV || current_top == IS || current_top == END) {
+                shift<token_types::ID>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::NUMBER:
+            if (current_top == ADD_SUB || current_top == START_SCOPE ||
+                current_top == MUL_DIV || current_top == IS || current_top == END) {
+                shift<token_types::NUMBER>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::END_SCOPE:
+            if (current_top == E) {
+                shift<token_types::END_SCOPE>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::START_SCOPE:
+            if (current_top == ADD_SUB || current_top == START_SCOPE ||
+                current_top == MUL_DIV || current_top == IS || current_top == END) {
+                shift<token_types::START_SCOPE>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::MUL:
+            if (current_top == T) {
+                shift<token_types::MUL>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::DIV:
+            if (current_top == T) {
+                shift<token_types::DIV>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::ADD:
+            if (current_top == E) {
+                shift<token_types::ADD>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::SUB:
+            if (current_top == E) {
+                shift<token_types::SUB>();
+            } else {
+                reduce();
+            }
+            break;
+        case token_types::IS:
+            if (current_top == ID) {
+                shift<token_types::IS>();
+            } else {
+                reduce();
             }
             break;
         default:
-            shift();
+            std::cerr << ERROR << ": unexpected lexem!" << std::endl;
+            exit(1);
     }
+
     return false;
 
 }
@@ -228,70 +319,4 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
 // SyntaxAnalizer<Grammar::LR0>::Leaf::operator std::string() const {
 //     return token_to_str(token);
 // }
-bool SyntaxAnalizer<Grammar::LR0>::first_step() {
-    if (input_.size() ==  0) {
-        return true;
-    }
-    token_types next_token = input_[0];
-    input_.erase(input_.begin());
-    switch (next_token) {
-        case token_types::START_SCOPE:
-            stack_.emplace_back(START_SCOPE);
-            last_action_ = "Shift";
-            break;
-        case token_types::END_SCOPE:
-            stack_.emplace_back(END_SCOPE);
-            last_action_ = "Shift";
-            break;
-        case token_types::ID:
-            stack_.emplace_back(ID);
-            last_action_ = "Shift";
-            break;
-        case token_types::NUMBER:
-            stack_.emplace_back(ID_NUM);
-            last_action_ = "Shift";
-            break;
-        case token_types::END:
-            stack_.emplace_back(EE);
-            last_action_ = "Shift";
-            break;
-        default:
-            std::cerr << "\x1b[31mERROR:\x1b[0m" << " undefined first lexem!" << std::endl;
-            exit(1);
-    }
-    return false;
-}
-
-void SyntaxAnalizer<Grammar::LR0>::shift() {
-
-    token_types  next_token     = input_[0];
-    input_.erase(input_.begin());
-
-    switch (next_token) {
-        case token_types::START_SCOPE:
-            stack_.emplace_back(START_SCOPE);
-            last_action_ = "Shift";
-            break;
-        case token_types::IS:
-            if (*(stack_.end() - 1) != ID) {
-                std::cerr << "\x1b[31mERROR:\x1b[0m" << " in front of = have to be ID!" << std::endl;
-                exit(1);
-            }
-            stack_.emplace_back(IS);
-            last_action_ = "Shift";
-            break;
-        case token_types::ID:
-            stack_.emplace_back(ID);
-            last_action_ = "Shift";
-            break;
-        case token_types::NUMBER:
-            stack_.emplace_back(ID_NUM);
-            last_action_ = "Shift";
-            break;
-        default:
-            std::cerr << "\x1b[31mERROR:\x1b[0m" << " undefined lexem!" << std::endl;
-            exit(1);
-    }
-}
-
 } //namespace syntax_analysis
