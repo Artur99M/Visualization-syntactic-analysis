@@ -27,6 +27,6 @@ enable_testing()
 file(GLOB testfiles "${CMAKE_SOURCE_DIR}/tests/*.dat")
 foreach(file ${testfiles})
     add_test (NAME ${file}
-        COMMAND ${CMAKE_SOURCE_DIR}/tests/test ${CMAKE_SOURCE_DIR} ${file})
+        COMMAND python3 ${CMAKE_SOURCE_DIR}/tests/test.py ${CMAKE_SOURCE_DIR} ${file})
     set_tests_properties(${file} PROPERTIES DEPENDS ${exec})
 endforeach()
