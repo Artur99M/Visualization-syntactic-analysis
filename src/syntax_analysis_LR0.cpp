@@ -172,13 +172,15 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
 
     switch (next_token) {
         case token_types::END:
-            if (current_top != EE) {
+            if (current_top == EE && stack_.size() == 2 && stack_.front() == END) {
+                input_.pop_front();
+                if (input_.size() == 0)
+                    return true;
+                throw std::invalid_argument(std::string("ERROR: final input is not empty! Your input in finish: \"") + input_dump() + "\"");
+            } else if (current_top != EE) {
                 reduce();
             } else {
-                if (*(stack_.end() - 2) == END)
-                    return true;
-                else
-                    throw std::invalid_argument("ERROR: there isn't expected lexem!");
+                throw std::invalid_argument("ERROR: there isn't expected lexem!");
             }
             break;
         case token_types::ID:
