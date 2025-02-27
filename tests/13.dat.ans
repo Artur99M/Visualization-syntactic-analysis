@@ -1,0 +1,11 @@
+_______________________________________________________________________________________________________
+|              STACK              |              INPUT              |              ACTION             |
+_______________________________________________________________________________________________________
+|$                                |num num id + num $               |                                 |
+|$ ID_NUM                         |num id + num $                   |Shift                            |
+|$ F                              |num id + num $                   |Reduce F -> id | num             |
+|$ T                              |num id + num $                   |Reduce T -> F                    |
+|$ E                              |num id + num $                   |Reduce E -> T                    |
+|$ I                              |num id + num $                   |Reduce I -> E                    |
+|$ E'                             |num id + num $                   |Reduce E' -> I                   |
+libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: can't reduce

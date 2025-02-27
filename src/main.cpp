@@ -22,16 +22,16 @@ if (!is_json) {
     tableHeaderGenerate();
 }
     try {
-    do {
-        if (is_json) {
-            JSON[std::to_string(nlines)] = {{"ACTION", An.last_action()},
-                                            {"INPUT",  An.input_dump()},
-                                            {"STACK",  An.stack_dump()}};
-            ++nlines;
-        } else {
-            tableLineGenerate(An);
-        }
-    } while (An.step() == false);
+        do {
+            if (is_json) {
+                JSON[std::to_string(nlines)] = {{"ACTION", An.last_action()},
+                                                {"INPUT",  An.input_dump()},
+                                                {"STACK",  An.stack_dump()}};
+                ++nlines;
+            } else {
+                tableLineGenerate(An);
+            }
+        } while (An.step() == false);
     } catch (std::invalid_argument x) {
         if (is_json)
             JSON["exception"] = x.what();

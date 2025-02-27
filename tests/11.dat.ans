@@ -15,4 +15,6 @@ ________________________________________________________________________________
 |$ ID = ( ( E + F                 |$                                |Reduce F -> id | num             |
 |$ ID = ( ( E + T                 |$                                |Reduce T -> F                    |
 |$ ID = ( ( E                     |$                                |Reduce E -> E + T                |
-libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: ')' not found
+|$ ID = ( ( I                     |$                                |Reduce I -> E                    |
+|$ ID = ( ( E'                    |$                                |Reduce E' -> I                   |
+libc++abi: terminating due to uncaught exception of type std::invalid_argument: ERROR: there isn't expected lexem!

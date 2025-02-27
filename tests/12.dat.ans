@@ -12,4 +12,6 @@ ________________________________________________________________________________
 |$ ( F                            |$                                |Reduce F -> (E)                  |
 |$ ( T                            |$                                |Reduce T -> F                    |
 |$ ( E                            |$                                |Reduce E -> T                    |
-libc++abi: terminating due to uncaught exception of type std::logic_error: ERROR: ')' not found
+|$ ( I                            |$                                |Reduce I -> E                    |
+|$ ( E'                           |$                                |Reduce E' -> I                   |
+libc++abi: terminating due to uncaught exception of type std::invalid_argument: ERROR: there isn't expected lexem!

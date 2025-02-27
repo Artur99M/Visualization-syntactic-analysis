@@ -143,8 +143,6 @@ void SyntaxAnalizer<Grammar::LR0>::reduce() {
                 stack_.pop_back();
                 stack_.back() = I;
                 last_action_ = REDUCE_I_ID_E;
-            } else if (*(stack_.end() - 2) == LBRACE) { //here always be error because if we here we did't shift RBRACE
-                throw std::logic_error("ERROR: \')\' not found");
             } else {
                 stack_.back() = I;
                 last_action_ = REDUCE_I_E;
@@ -174,10 +172,14 @@ bool SyntaxAnalizer<Grammar::LR0>::step() {
 
     switch (next_token) {
         case token_types::END:
-            if (current_top != EE)
+            if (current_top != EE) {
                 reduce();
-            else
-                return true;
+            } else {
+                if (*(stack_.end() - 2) == END)
+                    return true;
+                else
+                    throw std::invalid_argument("ERROR: there isn't expected lexem!");
+            }
             break;
         case token_types::ID:
             if (current_top == ADD_SUB || current_top == LBRACE ||
